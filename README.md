@@ -12,7 +12,7 @@
 ##### Pre-built binaries (RECOMMENDED)
 ###### Guide
 
-1. Check the releases tab on this GitHub repository.
+1. Check the [releases](https://github.com/bjsi/SuperMemoAssistant.Plugins.EasySymbols/releases) for this repository.
 2. Download the latest available version.
 3. Navigate to the development plugin folder (`C:\Users\<YOUR USERNAME>\SuperMemoAssistant\Plugins\Development`) and extract the zip folder into the directory.
   > Note: If you are upgrading from an older version, you should delete the older version first.
