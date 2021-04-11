@@ -25,7 +25,7 @@ If you have selected the name of a symbol, it will simply be replaced with the s
 
 > You can access the settings of any SuperMemoAssistant plugin by pressing Ctrl+Alt+Shift+O and clicking the gear icon.
 
-You can add teh 
+You can customise the dictionary of names and symbols in the settings.
 
 ## Support
 
