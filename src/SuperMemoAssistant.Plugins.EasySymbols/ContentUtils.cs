@@ -2,10 +2,7 @@
 using SuperMemoAssistant.Extensions;
 using SuperMemoAssistant.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Remoting;
 
 namespace SuperMemoAssistant.Plugins.EasySymbols
 {
@@ -17,16 +14,22 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
     /// <returns>IHTMLTxtRange object or null</returns>
     public static IHTMLTxtRange GetSelectionObject()
     {
+      try
+      {
+        var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+        var htmlCtrl = ctrlGroup?.FocusedControl?.AsHtml();
+        var htmlDoc = htmlCtrl?.GetDocument();
+        var sel = htmlDoc?.selection;
 
-      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrlGroup?.FocusedControl?.AsHtml();
-      var htmlDoc = htmlCtrl?.GetDocument();
-      var sel = htmlDoc?.selection;
+        if (!(sel?.createRange() is IHTMLTxtRange textSel))
+          return null;
 
-      if (!(sel?.createRange() is IHTMLTxtRange textSel))
-        return null;
+        return textSel;
+      }
+      catch (RemotingException) { }
+      catch (UnauthorizedAccessException) { }
 
-      return textSel;
+      return null;
 
     }
 
@@ -37,10 +40,16 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
     public static IHTMLDocument2 GetFocusedHTMLDocument()
     {
 
-      var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
-      var htmlCtrl = ctrlGroup?.FocusedControl?.AsHtml();
-      return htmlCtrl?.GetDocument();
+      try
+      {
+        var ctrlGroup = Svc.SM.UI.ElementWdw.ControlGroup;
+        var htmlCtrl = ctrlGroup?.FocusedControl?.AsHtml();
+        return htmlCtrl?.GetDocument();
+      }
+      catch (RemotingException) { }
+      catch (UnauthorizedAccessException) { }
 
+      return null;
     }
   }
 }

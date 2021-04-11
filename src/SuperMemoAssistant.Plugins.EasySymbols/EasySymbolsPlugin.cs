@@ -36,24 +36,27 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
   using System.Diagnostics.CodeAnalysis;
   using System.Linq;
   using System.Runtime.Remoting;
+  using System.Threading.Tasks;
   using System.Windows.Input;
   using Anotar.Serilog;
   using mshtml;
   using SuperMemoAssistant.Extensions;
+  using SuperMemoAssistant.Interop.Plugins;
   using SuperMemoAssistant.Services;
+  using SuperMemoAssistant.Services.IO.HotKeys;
   using SuperMemoAssistant.Services.IO.Keyboard;
-  using SuperMemoAssistant.Services.Sentry;
+  using SuperMemoAssistant.Services.UI.Configuration;
   using SuperMemoAssistant.Sys.IO.Devices;
 
   // ReSharper disable once UnusedMember.Global
   // ReSharper disable once ClassNeverInstantiated.Global
   [SuppressMessage("Microsoft.Naming", "CA1724:TypeNamesShouldNotMatchNamespaces")]
-  public class EasySymbolsPlugin : SentrySMAPluginBase<EasySymbolsPlugin>
+  public class EasySymbolsPlugin : SMAPluginBase<EasySymbolsPlugin>
   {
     #region Constructors
 
     /// <inheritdoc />
-    public EasySymbolsPlugin() : base("Enter your Sentry.io api key (strongly recommended)") { }
+    public EasySymbolsPlugin() { }
 
     #endregion
 
@@ -72,30 +75,37 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
 
     #region Methods Impl
 
-    private void LoadConfig()
+    private async Task LoadConfig()
     {
-      Config = Svc.Configuration.Load<EasySymbolsCfg>() ?? new EasySymbolsCfg();
+      Config = await Svc.Configuration.Load<EasySymbolsCfg>().ConfigureAwait(false) ?? new EasySymbolsCfg();
     }
 
     /// <inheritdoc />
     protected override void PluginInit()
     {
 
-      LoadConfig();
+      LoadConfig().Wait();
 
       Svc.HotKeyManager.RegisterGlobal(
         "InsertSymbol",
-        "Convert selected text to a symbol or type the name of a symbol to insert it at the cursor position",
-        HotKeyScopes.SMBrowser,
+        "Insert Symbol",
+        HotKeyScope.SMBrowser,
         new HotKey(Key.S, KeyModifiers.CtrlAltShift),
         InsertSymbol
       );
-
     }
 
     private Dictionary<string, string> CreateSymbolMap()
     { 
-      return Config?.NameSymbolMap?.Deserialize<Dictionary<string, string>>();
+      try 
+      { 
+        return Config?.NameSymbolMap?.Deserialize<Dictionary<string, string>>();
+      }
+      catch (Exception ex)
+      {
+        LogTo.Debug("Exception caught converting the config symbol map into a C# dictionary. Check the formatting of the config map.");
+        return new Dictionary<string, string>();
+      }
     }
 
     [LogToErrorOnException]
@@ -128,7 +138,7 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
           return;
 
         string id = Guid.NewGuid().ToString();
-        selObj.pasteHTML($"<span id='{id}' style='color: blue;'>" + "%_%" + "</span>");
+        selObj.pasteHTML($"<span id='{id}'>" + "%_%" + "</span>");
 
         var span = htmlDoc.all
           ?.Cast<IHTMLElement>()
@@ -161,7 +171,6 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
     {
       try
       {
-
         var selObj = ContentUtils.GetSelectionObject();
         var src = selObj.parentElement();
         var target = e.spanElement;
@@ -201,9 +210,6 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
         if (body.IsNull() || span.IsNull())
           return;
 
-        // Set foreground color back to black
-        span.style.color = "black";
-
         // Remove events
         ((IHTMLElement2)body).detachEvent("onkeyup", _keyup);
 
@@ -215,7 +221,7 @@ namespace SuperMemoAssistant.Plugins.EasySymbols
     /// <inheritdoc />
     public override void ShowSettings()
     {
-
+      ConfigurationWindow.ShowAndActivate(HotKeyManager.Instance, Config);
     }
 
     #endregion
